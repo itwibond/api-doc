@@ -1,0 +1,2384 @@
+openapi: 3.0.1
+info:
+  title: Wibond API
+  description: Wibond API v1 está organizada alrededor de REST sobre el protocolo HTTPS.
+  contact:
+    email: hola@wibond.co
+  license:
+    name: Spece Technologies Argentina S.A.S
+  version: 1.0.0
+servers:
+  - url: 'https://api-staging.wibond.com.ar/api/v1'
+  - url: 'https://api.wibond.com.ar/api/v1'
+tags:
+  - name: authentication
+  - name: tenants
+  - name: wallets
+  - name: unsignedTransactions
+  - name: transactions
+  - name: sources
+  - name: beneficiaries
+  - name: payOrders
+  - name: config
+paths:
+  /login:
+    post:
+      tags:
+        - authentication
+      summary: Obtener token para la verficación.
+      description: 'Lo opción recomendada para la utilización de las api es a través del SecretKey. El SecretKey se puede obtener dentro del perfil de cada usuario o solicitandolo a hola@wibond.co. <br>Otra opción es la utilización del servicio de login. Luego de establecer acceso exitoso, es necesario enviar en cada request un header con el TOKEN obtenido utilizando el siguiente servicio. De esta forma: Authorization: Bearer XXXXXX.'
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogInRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+        '400':
+          description: Usuario inexistente con el email y clave ingresadas.
+          content: {}
+        '401':
+          description: Invalid credentials
+          content: {}
+  '/tenants/{tenantId}/wallets/{walletId}/beneficiaries':
+    get:
+      tags:
+        - beneficiaries
+      summary: Retorna los beneficiarios agendados de la cuenta.
+      description: Este servicio se utiliza buscar beneficiarios agendados.
+      operationId: getBeneficiaries
+      parameters:
+        - name: tenantId
+          in: path
+          description: ID of Tenant to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: ID of Wallet to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: q
+          in: query
+          required: false
+          description: 'Busca por nombre, cbu, cuil o cuit del beneficiario'
+          schema:
+            type: string
+        - name: sortAscending
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          required: false
+          description: Cantidad de beneficiarios a retornar
+          schema:
+            type: integer
+            default: 20
+        - name: next
+          in: query
+          description: Primer beneficiario para la siguiente consulta.
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationSourceResponse'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}':
+    get:
+      tags:
+        - tenants
+      summary: Retornar el Tenant según el ID.
+      description: Este servicio se utiliza para retornar el detalle de un tenant.
+      operationId: getTenantById
+      parameters:
+        - name: tenantId
+          in: path
+          description: ID of Tenant to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/secret':
+    get:
+      tags:
+        - config
+      summary: Retorna secretKey de la cuenta.
+      description: Retorna el valor del secretKey para poder realizar otras operaciones.
+      operationId: getSecretKey
+      parameters:
+        - name: tenantId
+          in: path
+          description: ID of Tenant to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretKeyResponse'
+        '400':
+          description: Invalid ID supplied
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/banks/cbu/{cbu}':
+    get:
+      tags:
+        - config
+      summary: Valida un número de CBU.
+      description: Retorna el nombre del banco y código.
+      operationId: getByCBU
+      parameters:
+        - name: cbu
+          in: path
+          description: CBU
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankByCBUResponse'
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/payOrders/code/{code}':
+    get:
+      tags:
+        - payOrders
+      summary: Obtener orden de pago con el código hash.
+      description: Retorna el detalle de la orden de pago.
+      operationId: getPayOrderByCode
+      parameters:
+        - name: code
+          in: path
+          description: Code hash
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}':
+    get:
+      tags:
+        - payOrders
+      summary: Obtener orden de pago con el id.
+      description: Retorna el detalle de la orden de pago.
+      operationId: getPayOrderById
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders':
+    get:
+      tags:
+        - payOrders
+      summary: Obtener todas las ordenes de pago de la cuenta
+      description: Retorna el detalle de la orden de pago.
+      operationId: getPayOrders
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: 'Se busca por name, email, taxId o username.'
+          schema:
+            type: string
+        - name: sortAscending
+          in: query
+          description: 'Orden ascencente para la busqueda. Por defecto, el orden es ascencente.'
+          schema:
+            type: boolean
+            default: true
+        - name: limit
+          in: query
+          description: Límite de cantidad de ordenes de pago a retornar.
+          schema:
+            type: integer
+            default: 100
+        - name: next
+          in: query
+          description: PayOrder Id del próximo a buscar.
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: createdStart
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: createdLimit
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationPayOrderResponse'
+      security:
+        - ApiKey: []
+        - Bearer: []
+  /tenants:
+    get:
+      tags:
+        - tenants
+      summary: Retorna la lista de tenant según los parámetros enviados.
+      description: Este servicio se utiliza para buscar tenant para luego emitir una nueva promesa de pago o endosar una promesa de pago.
+      operationId: getTenants
+      parameters:
+        - name: q
+          in: query
+          description: 'Se busca por name, email, taxId o username.'
+          schema:
+            type: string
+        - name: sortAscending
+          in: query
+          description: 'Orden ascencente para la busqueda. Por defecto, el orden es ascencente.'
+          schema:
+            type: boolean
+            default: true
+        - name: limit
+          in: query
+          description: Límite de cantidad de tenant a retornar.
+          schema:
+            type: integer
+            default: 100
+        - name: next
+          in: query
+          description: Tenant Id del próximo a buscar.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantsResponse'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets':
+    get:
+      tags:
+        - wallets
+      summary: Retorna el listado de wallets de la tenant.
+      description: El servicio se utilizará en el cuando la misma tenant tenga distintas billeteras de distinta moneda.
+      operationId: getWallets
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant Id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Wallet'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}':
+    get:
+      tags:
+        - wallets
+      summary: Retornar el detalle de una wallet.
+      operationId: getWalletById
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{id}/wallets/{walletId}/operations':
+    get:
+      tags:
+        - transactions
+      summary: Return the list of operations from a wallet matching the search. criterias
+      operationId: getOperations
+      parameters:
+        - name: id
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: q
+          in: query
+          description: 'Filtra por name, email o id.'
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 100
+        - name: next
+          in: query
+          description: Id del próximo a buscar.
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          description: 'Filtra por el estado de la transacción. (PENDING, PROCESSING, COMPLETED, CANCELED, DELAYED, AVAILABLE, PROCESSED)'
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: 'Filtra por el tipo de transacción. (topup, transfer, endorsement, cheque, withdrawal, withdrawal_fee)'
+          schema:
+            type: string
+        - name: createdStart
+          in: query
+          description: Filter by start date.
+          schema:
+            type: string
+            format: date-time
+        - name: createdLimit
+          in: query
+          description: Filter by limit date.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationsResponse'
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{id}/wallets/{walletId}/transactions/{transactionId}':
+    get:
+      tags:
+        - transactions
+      summary: Retorna el detalle de la transacción.
+      operationId: getTransactionById
+      parameters:
+        - name: id
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: transactionId
+          in: path
+          description: Transaction ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{id}/wallets/{walletId}/operations/{groupId}':
+    get:
+      tags:
+        - transactions
+      summary: Return the operation of a transaction from a wallet
+      operationId: getOperationsById
+      parameters:
+        - name: id
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: groupId
+          in: path
+          description: groupId equals to unsignedTransactionId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{id}/wallets/{walletId}/unsigned/{groupId}':
+    get:
+      tags:
+        - unsignedTransactions
+      summary: Retorna una transacción sin autorizar.
+      operationId: getUnsignedTransactionById
+      parameters:
+        - name: id
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: groupId
+          in: path
+          description: groupId es igual a unsignedTransactionId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransaction'
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{id}/wallets/{walletId}/transactions/pending':
+    get:
+      tags:
+        - unsignedTransactions
+      summary: Retorna todas las transacciones sin autorizar. Si la transacción expiro o se borró no se retorna en esta lista.
+      operationId: getUnsignedTransactions
+      parameters:
+        - name: id
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransactionsResponse'
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/transactions/unsigned/{transactionId}':
+    delete:
+      tags:
+        - unsignedTransactions
+      summary: Eliminar una transacción sin firmar
+      operationId: deleteUnsignedTransaction
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: transactionId
+          in: path
+          description: Transaction ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content: {}
+        '400':
+          description: Invalid conditions supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/withdraw':
+    post:
+      tags:
+        - unsignedTransactions
+      summary: Crear retiro en wallet sin autorizar.
+      operationId: createWithdrawal
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewWithdraw'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransaction'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/new':
+    post:
+      tags:
+        - payOrders
+      summary: Crear borrador de orden de pago
+      operationId: createDraftPayOrder
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayOrderRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/update':
+    put:
+      tags:
+        - payOrders
+      summary: Modificar borrador de orden de pago
+      operationId: updateDraftPayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayOrderRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/send':
+    post:
+      tags:
+        - payOrders
+      summary: Enviar de orden de pago
+      operationId: sendPayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/approve':
+    put:
+      tags:
+        - payOrders
+      summary: Aprobar de orden de pago
+      operationId: approvePayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/payedInCash':
+    put:
+      tags:
+        - payOrders
+      summary: Pagada en efectivo de orden de pago
+      operationId: payedInCashPayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/reject':
+    put:
+      tags:
+        - payOrders
+      summary: Rechazar orden de pago
+      operationId: rejectPayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/payOrders/{payOrderId}/cancel':
+    put:
+      tags:
+        - payOrders
+      summary: Cancelar orden de pago
+      operationId: cancelPayOrder
+      parameters:
+        - name: payOrderId
+          in: path
+          description: PayOrder ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayOrderResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/endorse':
+    post:
+      tags:
+        - unsignedTransactions
+      summary: Crear endoso de dinero pendiente sin autorizar.
+      operationId: createEndorse
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewEndorse'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransaction'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/issue-cheque':
+    post:
+      tags:
+        - unsignedTransactions
+      summary: Crear un nuevo pago diferido sin autorizar.
+      operationId: createCheque
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewCheque'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransaction'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/issue-transfer':
+    post:
+      tags:
+        - unsignedTransactions
+      summary: Crear una nueva transferencia.
+      operationId: createTransfer
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletTransferRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsignedTransaction'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/beneficiaries/new':
+    post:
+      tags:
+        - beneficiaries
+      summary: Crear un nuevo beneficiario para transferir dinero disponible en tu billetera.
+      operationId: createBeneficiary
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/beneficiaries/{sourceId}/update':
+    put:
+      tags:
+        - beneficiaries
+      summary: Modificar beneficiario de tu cuenta.
+      operationId: updateBeneficiary
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source ID or Beneficiary ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/beneficiaries/{sourceId}':
+    get:
+      tags:
+        - beneficiaries
+      summary: Obtener beneficiario para transferir dinero disponible en tu billetera.
+      operationId: getBeneficiary
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source ID or Beneficiary ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/wallets/{walletId}/beneficiaries/{sourceId}/delete':
+    delete:
+      tags:
+        - beneficiaries
+      summary: Borrar beneficiario de tu cuenta.
+      operationId: deleteBeneficiary
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source ID or Beneficiary ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: walletId
+          in: path
+          description: Wallet ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/sources/new':
+    post:
+      tags:
+        - sources
+      summary: 'Crear un nuevo source para emitir pagos diferidos, retiros'
+      operationId: createSource
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceRequest'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+        '400':
+          description: Invalid input supplied
+          content: {}
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user cannot perform the operation'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/sources':
+    get:
+      tags:
+        - sources
+      summary: Return la lista de source cargados en la tenant.
+      operationId: getSources
+      parameters:
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/sources/{sourceId}':
+    get:
+      tags:
+        - sources
+      summary: Return el detalle de un source.
+      operationId: getSourceById
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+  '/tenants/{tenantId}/sources/{sourceId}/delete':
+    delete:
+      tags:
+        - sources
+      summary: Eliminar un source
+      operationId: deleteSource
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tenantId
+          in: path
+          description: Tenant ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
+        '401':
+          description: Not authenticated
+          content: {}
+        '403':
+          description: 'Forbidden, user has no access to the requested resource'
+          content: {}
+        '404':
+          description: Entity not found
+          content: {}
+      security:
+        - ApiKey: []
+        - Bearer: []
+components:
+  schemas:
+    SecretKeyResponse:
+      type: object
+      properties:
+        secretKey:
+          type: string
+    TransactionType:
+      type: string
+      enum:
+        - topup
+        - transfer
+        - endorsement
+        - cheque
+        - withdrawal
+        - withdrawal_fee
+    SourceType:
+      type: string
+      enum:
+        - CBU
+        - CREDIT
+        - DEBIT
+        - CVU
+        - PERSON
+        - ALIAS
+    OperationsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        hasNext:
+          type: boolean
+        next:
+          type: integer
+          format: int64
+    TransactionStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - CANCELED
+        - DELAYED
+        - AVAILABLE
+        - PROCESSED
+    Operation:
+      type: object
+      properties:
+        groupId:
+          type: integer
+          format: int64
+        relatedTenant:
+          $ref: '#/components/schemas/Tenant'
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        availableOn:
+          type: string
+          format: date-time
+        currency:
+          type: string
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        source:
+          $ref: '#/components/schemas/SourceResponse'
+        description:
+          type: string
+        taxAmount:
+          type: integer
+          format: int64
+        relatedBeneficiary:
+          $ref: '#/components/schemas/SourceResponse'
+        provider:
+          $ref: '#/components/schemas/TransactionProvider'
+    TransactionProvider:
+      type: string
+      enum:
+        - PAGOFACIL
+        - RAPIPAGO
+        - REDLINK
+        - BIND
+    UnsignedTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        amount:
+          type: integer
+          format: int64
+        availableOn:
+          type: string
+          format: date-time
+        description:
+          type: string
+        currency:
+          type: string
+        relatedTenant:
+          $ref: '#/components/schemas/Tenant'
+        createdBy:
+          $ref: '#/components/schemas/UserResponse'
+        source:
+          $ref: '#/components/schemas/SourceResponse'
+        status:
+          $ref: '#/components/schemas/UnsignedTransactionStatus'
+        relatedPayOrder:
+          $ref: '#/components/schemas/PayOrderResponse'
+        signed:
+          type: boolean
+    Tenant:
+      required:
+        - id
+        - name
+        - taxId
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: Legal Name
+        avatar:
+          type: string
+          format: uri
+        taxIdType:
+          type: integer
+          format: int64
+          example: 80
+        status:
+          $ref: '#/components/schemas/TenantStatus'
+        taxId:
+          type: string
+          example: '30123456789'
+        username:
+          type: string
+        successfulTransactions:
+          type: integer
+          format: int64
+          example: 1
+        delayedTransactions:
+          type: integer
+          format: int64
+          example: 2
+        inProgressTransactions:
+          type: integer
+          format: int64
+          example: 3
+        type:
+          $ref: '#/components/schemas/TenantType'
+        tenantArea:
+          $ref: '#/components/schemas/TenantArea'
+    TenantArea:
+      type: string
+      enum:
+        - SUPERMERCADO
+        - VIAJES_TURISMO
+        - INDUMENTARIA
+        - RESTAURANTES
+        - AUTOMOVIL
+        - HOGAR
+        - SERVICIOS
+        - OTROS
+    TenantStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - NOT_VERIFIED
+        - VERIFICATION_IN_PROGRESS
+    NewTransaction:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+    UnsignedTransactionStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - EXPIRED
+        - DELETE
+        - AUTHORIZED
+    Currency:
+      type: string
+      enum:
+        - ARS
+        - USD
+    UnsignedTransactionsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/UnsignedTransaction'
+    SourceResponse:
+      type: object
+      properties:
+        currency:
+          $ref: '#/components/schemas/Currency'
+        alias:
+          type: string
+        name:
+          type: string
+        priority:
+          type: integer
+        number:
+          type: string
+        taxId:
+          type: string
+        id:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/SourceType'
+        bankName:
+          type: string
+        bankCode:
+          type: string
+        email:
+          type: string
+        status:
+          $ref: '#/components/schemas/EntityStatus'
+    EntityStatus:
+      type: object
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - INVALID
+    Wallet:
+      required:
+        - currency
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        alias:
+          type: string
+        currency:
+          type: string
+          format: iso-code
+          example: ARS
+        available:
+          type: number
+          example: 1500
+        pending:
+          type: number
+          example: 2010.5
+        owed:
+          type: number
+          example: 0
+        feeFreeAmount:
+          type: number
+        cvuNumber:
+          type: string
+        cvuLabel:
+          type: string
+        feePercentage:
+          type: number
+        feeDaysUntilFree:
+          type: integer
+        hasInvestments:
+          type: boolean
+    NewWithdraw:
+      allOf:
+        - $ref: '#/components/schemas/NewTransaction'
+          type: object
+          properties:
+            source:
+              type: integer
+              description: Source Id
+              format: int64
+              example: 1
+            relatedBeneficiary:
+              type: integer
+              format: int64
+            provider:
+              type: string
+    AuthorizationResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          format: jwt
+        user:
+          $ref: '#/components/schemas/UserResponse'
+    WalletTransferRequest:
+      allOf:
+        - $ref: '#/components/schemas/NewTransaction'
+        - required:
+            - availableOn
+            - destinationTenant
+            - source
+          type: object
+          properties:
+            destinationTenant:
+              type: integer
+              format: int64
+            destinationBeneficiary:
+              type: integer
+              format: int64
+            description:
+              type: string
+            source:
+              type: integer
+              format: int64
+            cbuOrAliasToTransfer:
+              type: string
+    NewCheque:
+      allOf:
+        - $ref: '#/components/schemas/NewTransaction'
+        - required:
+            - availableOn
+            - destinationTenant
+            - source
+          type: object
+          properties:
+            destinationTenant:
+              type: integer
+              format: int64
+            description:
+              type: string
+            availableOn:
+              type: string
+              format: date-time
+            source:
+              type: integer
+              format: int64
+    Role:
+      type: string
+      enum:
+        - OWNER
+        - AUTHORIZER
+        - STAFF
+        - ACCOUNT_MANAGER
+        - STAFF_READ_ONLY
+        - STAFF_PAY_ORDER
+        - STAFF_TRANSFER
+    TenantType:
+      type: string
+      enum:
+        - PERSONAL
+        - BUSINESS
+    Transaction:
+      required:
+        - amount
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        createdAt:
+          type: string
+          format: date-time
+        availableOn:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: '#/components/schemas/UserResponse'
+        amount:
+          type: integer
+          format: int64
+        sourceId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        description:
+          type: string
+        groupId:
+          type: integer
+          format: int64
+        relatedTenant:
+          $ref: '#/components/schemas/Tenant'
+        rootTenant:
+          $ref: '#/components/schemas/Tenant'
+        available:
+          type: integer
+          format: int64
+        currency:
+          type: string
+          enum:
+            - USD
+            - ARS
+    NewEndorse:
+      allOf:
+        - $ref: '#/components/schemas/NewTransaction'
+        - required:
+            - destinationTenant
+          type: object
+          properties:
+            destinationTenant:
+              type: integer
+              format: int64
+            description:
+              type: string
+    SignUpRequest:
+      type: object
+      properties:
+        email:
+          maxLength: 250
+          minLength: 1
+          type: string
+        password:
+          maxLength: 40
+          minLength: 3
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        tenantType:
+          $ref: '#/components/schemas/TenantType'
+        tenantName:
+          type: string
+        taxIdType:
+          type: integer
+          format: int64
+        taxId:
+          minLength: 1
+          type: string
+        phone:
+          type: string
+    UserResponse:
+      type: object
+      properties:
+        fullName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        avatar:
+          type: string
+        currentTenant:
+          $ref: '#/components/schemas/Tenant'
+        currentRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipResponse'
+    MembershipResponse:
+      type: object
+      properties:
+        tenant:
+          $ref: '#/components/schemas/TenantResponse'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    SourcesResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SourceResponse'
+    TenantResponse:
+      $ref: '#/components/schemas/Tenant'
+    TenantsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tenant'
+        hasNext:
+          type: boolean
+        next:
+          type: integer
+          format: int64
+    BankByCBUResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Banco Galcia
+        code:
+          type: string
+          example: '007'
+    LogInRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email o usuario de la plataforma
+        password:
+          type: string
+          format: password
+    PaginationSourceResponse:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        next:
+          type: integer
+          format: int64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceResponse'
+    PaginationPayOrderResponse:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        next:
+          type: integer
+          format: int64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayOrderResponse'
+    SourceRequest:
+      type: object
+      required:
+        - name
+        - number
+        - type
+        - taxId
+        - taxIdType
+      properties:
+        name:
+          type: string
+        number:
+          type: string
+        priority:
+          type: integer
+        type:
+          $ref: '#/components/schemas/SourceType'
+        taxId:
+          type: string
+        taxIdType:
+          type: integer
+          format: int64
+        email:
+          type: string
+    PayOrderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date
+        amount:
+          type: integer
+          format: float
+        due:
+          type: string
+          format: date
+        invoiceDate:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/PayOrderStatus'
+        description:
+          type: string
+        sender:
+          $ref: '#/components/schemas/TenantResponse'
+        receiver:
+          $ref: '#/components/schemas/TenantResponse'
+        createdBy:
+          $ref: '#/components/schemas/SimpleUserResponse'
+        invoiceNumber:
+          type: string
+        invoice:
+          type: string
+        relatedTransaction:
+          $ref: '#/components/schemas/TenantResponse'
+        cancellationReason:
+          type: string
+        currency:
+          $ref: '#/components/schemas/Currency'
+        code:
+          type: string
+        url:
+          type: string
+        reusable:
+          type: boolean
+        receiverEmail:
+          type: string
+        pagoFacilStatus:
+          $ref: '#/components/schemas/PayOrderProviderStatus'
+        senderCVU:
+          type: string
+        senderCVUAlias:
+          type: string
+        reference:
+          type: string
+        cbuToDebin:
+          type: string
+    PayOrderProviderStatus:
+      type: object
+      enum:
+        - 'NO'
+        - SEND
+        - SENT
+    SimpleUserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+        username:
+          type: string
+    PayOrderRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        amount:
+          type: number
+        receiver:
+          type: integer
+          format: int64
+        description:
+          type: string
+        invoice:
+          type: string
+        invoiceNumber:
+          type: string
+        due:
+          type: string
+          format: date
+        invoiceDate:
+          type: string
+          format: date
+        reusable:
+          type: boolean
+        receiverEmail:
+          type: string
+        reference:
+          type: string
+        iva:
+          $ref: '#/components/schemas/AfipIva'
+        cbuToDebin:
+          type: string
+    AfipIva:
+      type: string
+      enum:
+        - SIN_IVA
+        - IVA_105
+        - IVA_21
+        - IVA_27
+    PayOrderStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SENT
+        - CANCELLED
+        - APPROVED
+        - REJECTED
+        - PAYED
+        - PAYED_IN_CASH
+        - EXPIRED
+        - ACTIVE
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      name: Authorization
+      in: header
+    Bearer:
+      type: http
+      scheme: bearer
