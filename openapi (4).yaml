@@ -115,7 +115,7 @@ paths:
     get:
       tags:
         - tenants
-      summary: Retornar el Tenant según el ID.
+      summary: Retornar el Tenant según el ID
       description: Este servicio se utiliza para retornar el detalle de un tenant.
       operationId: getTenantById
       parameters:
@@ -2284,6 +2284,7 @@ components:
           type: string
         url:
           type: string
+          description: Retorna la url del link de pago.
         reusable:
           type: boolean
         receiverEmail:
