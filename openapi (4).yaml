@@ -1822,6 +1822,58 @@ paths:
       security:
         - ApiKey: []
         - Bearer: []
+  '/payment-link/{tenantId}/wallet/{walletId}/query/{paymentLinkId}':
+    get:
+      summary: Cobros con un link de pago
+      tags:
+        - PaymentLink
+      responses: {}
+      operationId: get-payment-link
+      security:
+        - ApiKey: []
+        - Bearer: []
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: q
+          description: Buscador
+        - schema:
+            type: number
+          in: query
+          name: paymentLinkFinancialPlanId
+        - schema:
+            type: number
+          in: query
+          name: paymentLinkOptionPlanId
+        - schema:
+            type: string
+          in: query
+          name: statuses
+        - schema:
+            type: number
+          in: query
+          name: limit
+        - schema:
+            type: number
+          in: query
+          name: next
+    parameters:
+      - schema:
+          type: string
+        name: tenantId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: walletId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: paymentLinkId
+        in: path
+        required: true
 components:
   schemas:
     SecretKeyResponse:
@@ -2617,6 +2669,30 @@ components:
           type: number
         enabled:
           type: boolean
+    PaymentLinkTenantStatus:
+      type:
+        - enum
+        - string
+      title: PaymentLinkTenantStatus
+      description: 'PENDING, IN_PROGRESS, COMPLETED, SENT, ERROR, CANCELED'
+    PaginationResponsePaymentsLink:
+      title: PaginationResponsePaymentsLink
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        next:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentLinkFinancialPlanTenantToPaymentLinkFinancialPlanTenantResponse'
+    PaymentLinkFinancialPlanTenantResponse:
+      title: PaymentLinkFinancialPlanTenantResponse
+      type: object
+      properties:
+        id:
+          type: number
   securitySchemes:
     ApiKey:
       type: apiKey
