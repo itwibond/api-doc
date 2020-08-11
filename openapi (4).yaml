@@ -1706,13 +1706,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentLinkResponse'
-      description: Crear Link de Pago
-      parameters:
-        - schema:
-            type: string
-          in: header
+      description: "Crear Link de Pago a través de API Wibond. \n"
+      parameters: []
       security:
-        - ApiKey: []
         - Bearer: []
       requestBody:
         content:
@@ -1722,18 +1718,23 @@ paths:
               properties:
                 productName:
                   type: string
+                  description: Nombre del link de pago.
                 amount:
-                  type: string
+                  type:
+                    - string
+                    - number
+                  format: float
+                  description: Importe del a cobrar del link de pago.
                 options:
                   $ref: '#/components/schemas/ListPaymentLinkCreateOptionPlanPayload'
               required:
                 - productName
                 - amount
-                - options
           application/xml:
             schema:
               type: object
               properties: {}
+        description: ''
       tags:
         - PaymentLink
 components:
