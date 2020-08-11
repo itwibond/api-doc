@@ -1684,7 +1684,7 @@ paths:
       security:
         - ApiKey: []
         - Bearer: []
-  '/create-payment-link/{tenantId}/wallet/{walletId}':
+  '/payment-link/create-payment-link/{tenantId}/wallet/{walletId}':
     parameters:
       - schema:
           type: string
@@ -1720,13 +1720,13 @@ paths:
                   type: string
                   description: Nombre del link de pago.
                 amount:
-                  type:
-                    - string
-                    - number
+                  type: number
                   format: float
                   description: Importe del a cobrar del link de pago.
                 options:
-                  $ref: '#/components/schemas/ListPaymentLinkCreateOptionPlanPayload'
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentLinkCreateOptionPlanPayload'
               required:
                 - productName
                 - amount
@@ -1737,6 +1737,24 @@ paths:
         description: ''
       tags:
         - PaymentLink
+  /payment-link/financial-plan-options:
+    get:
+      summary: Obtener las opciones de pago para la creación de un link de pago
+      tags:
+        - PaymentLink
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinkFinancialPlanOptionsResponse'
+      operationId: get-payment-link-financial-plan-options
+      description: ''
+      security:
+        - ApiKey: []
+        - Bearer: []
+    parameters: []
 components:
   schemas:
     SecretKeyResponse:
@@ -2446,10 +2464,6 @@ components:
           type: number
         daysFrequencyPayment:
           type: integer
-    ListPaymentLinkCreateOptionPlanPayload:
-      title: ListPaymentLinkCreateOptionPlanPayload
-      allOf:
-        - $ref: '#/components/schemas/PaymentLinkCreateOptionPlanPayload'
     PaymentLinkResponse:
       title: PaymentLinkResponse
       type: object
@@ -2472,6 +2486,70 @@ components:
           $ref: '#/components/schemas/Tenant'
         created:
           type: string
+    PaymentLinkFinancialPlanOptionsResponse:
+      title: PaymentLinkFinancialPlanOptionsResponse
+      type: object
+      description: ''
+      properties:
+        planOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListPaymentLinkOptionPlanResponse'
+        feeOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListPaymentLinkOptionFeeResponse'
+        frequencyOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListPaymentLinkOptionFrequencyResponse'
+    ListPaymentLinkOptionPlanResponse:
+      title: PaymentLinkOptionPlan
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        configurable:
+          type: boolean
+        daysFrequencyPayment:
+          type: number
+        fees:
+          type: number
+        percentageProfit:
+          type: number
+        orderRow:
+          type: integer
+        enabled:
+          type: boolean
+    ListPaymentLinkOptionFeeResponse:
+      title: PaymentLinkOptionFee
+      type: object
+      description: ''
+      properties:
+        code:
+          type: string
+        fees:
+          type: number
+        orderRow:
+          type: number
+        enabled:
+          type: boolean
+    ListPaymentLinkOptionFrequencyResponse:
+      title: PaymentLinkOptionFrequency
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        daysFrequencyPayment:
+          type: number
+        orderRow:
+          type: number
+        enabled:
+          type: boolean
   securitySchemes:
     ApiKey:
       type: apiKey
