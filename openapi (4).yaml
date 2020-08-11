@@ -1824,10 +1824,16 @@ paths:
         - Bearer: []
   '/payment-link/{tenantId}/wallet/{walletId}/query/{paymentLinkId}':
     get:
-      summary: Cobros con un link de pago
+      summary: Obtener cobros de un link de pago
       tags:
         - PaymentLink
-      responses: {}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginationResponsePaymentsLink'
       operationId: get-payment-link
       security:
         - ApiKey: []
@@ -2686,13 +2692,72 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/PaymentLinkFinancialPlanTenantToPaymentLinkFinancialPlanTenantResponse'
+            $ref: '#/components/schemas/PaymentLinkFinancialPlanTenantResponse'
     PaymentLinkFinancialPlanTenantResponse:
       title: PaymentLinkFinancialPlanTenantResponse
       type: object
+      description: ''
       properties:
         id:
           type: number
+        groupPaymentLink:
+          type: string
+        feesToPay:
+          type: integer
+        feesPaid:
+          type: integer
+        firstPaymentDate:
+          type: string
+          format: date
+        created:
+          type: string
+          format: date
+        daysFrequencyPayment:
+          type: number
+        percentageProfitTna:
+          type: number
+        feeAmount:
+          type: number
+        relatedPaymentLink:
+          $ref: '#/components/schemas/PaymentLinkResponse'
+        relatedPaymentLinkId:
+          type: number
+        paymentLinkFinancialPlan:
+          $ref: '#/components/schemas/PaymentLinkFinancialPlanOptionsResponse'
+        paymentLinkFinancialPlanId:
+          type: number
+        tenant:
+          $ref: '#/components/schemas/Tenant'
+        tenantId:
+          type: number
+        walletId:
+          type: number
+        currency:
+          $ref: '#/components/schemas/Currency'
+        status:
+          type: string
+        payNow:
+          type: boolean
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentLinkPaymentMethod'
+        providerCode:
+          type: string
+        destinationTenant:
+          $ref: '#/components/schemas/Tenant'
+        destinationTenantId:
+          type: number
+        destinationWalletId:
+          type: number
+    PaymentLinkPaymentMethod:
+      type: string
+      title: PaymentLinkPaymentMethod
+      description: "    FINANCIAL_PLAN, TRANSFER_WIBOND, CASH_RAPIPAGO_PAGOFACIL, DEBIN, DEBIT\n  "
+      enum:
+        - FINANCIAL_PLAN
+        - TRANSFER_WIBOND
+        - CASH_RAPIPAGO_PAGOFACIL
+        - DEBIN
+        - DEBIT
   securitySchemes:
     ApiKey:
       type: apiKey
