@@ -1722,10 +1722,14 @@ paths:
               properties:
                 productName:
                   type: string
-                amiunt:
+                amount:
                   type: string
                 options:
                   $ref: '#/components/schemas/ListPaymentLinkCreateOptionPlanPayload'
+              required:
+                - productName
+                - amount
+                - options
           application/xml:
             schema:
               type: object
