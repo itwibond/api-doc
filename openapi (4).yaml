@@ -1684,6 +1684,52 @@ paths:
       security:
         - ApiKey: []
         - Bearer: []
+  '/create-payment-link/{tenantId}/wallet/{walletId}':
+    parameters:
+      - schema:
+          type: string
+        name: tenantId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: walletId
+        in: path
+        required: true
+    post:
+      summary: Crear link de pago
+      operationId: post-create-payment-link
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinkResponse'
+      description: Crear Link de Pago
+      parameters:
+        - schema:
+            type: string
+          in: header
+      security:
+        - ApiKey: []
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productName:
+                  type: string
+                amiunt:
+                  type: string
+                options:
+                  $ref: '#/components/schemas/ListPaymentLinkCreateOptionPlanPayload'
+          application/xml:
+            schema:
+              type: object
+              properties: {}
 components:
   schemas:
     SecretKeyResponse:
@@ -2375,6 +2421,50 @@ components:
         - PAYED_IN_CASH
         - EXPIRED
         - ACTIVE
+    PaymentLinkCreateOptionPlanPayload:
+      title: PaymentLinkCreateOptionPlanPayload
+      type: object
+      description: Opciones de medio de pago para la generación de un link de pago.
+      x-examples: {}
+      properties:
+        id:
+          type: number
+        code:
+          type: string
+        configurable:
+          type: boolean
+        fees:
+          type: integer
+        percentageProfit:
+          type: number
+        daysFrequencyPayment:
+          type: integer
+    ListPaymentLinkCreateOptionPlanPayload:
+      title: ListPaymentLinkCreateOptionPlanPayload
+      allOf:
+        - $ref: '#/components/schemas/PaymentLinkCreateOptionPlanPayload'
+    PaymentLinkResponse:
+      title: PaymentLinkResponse
+      type: object
+      properties:
+        id:
+          type: number
+        productName:
+          type: string
+        urlLink:
+          type: string
+        status:
+          $ref: '#/components/schemas/EntityStatus'
+        tenantId:
+          type: number
+        walletId:
+          type: number
+        currency:
+          $ref: '#/components/schemas/Currency'
+        tenant:
+          $ref: '#/components/schemas/Tenant'
+        created:
+          type: string
   securitySchemes:
     ApiKey:
       type: apiKey
